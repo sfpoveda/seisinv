@@ -216,6 +216,44 @@ class MathOps:
         f = v/lambda_
 
         return f
+    
+    def calc_porosity(self, method, t_log=None, t_m=None, rho_matrix=None, rho_rock=None, rho_pore=None, r=None):
+
+        t_poro = t_log - t_m
+
+        if method == 'sonic':
+
+            phi = (t_log - t_m)/(t_poro - t_m)
+
+        elif method == 'rho':
+
+            phi = (rho_matrix - rho_rock)/(rho_matrix - rho_pore)
+
+        elif method == 'theoric':
+
+            phi = (4*r**2 - np.pi*r**2)/(4*r**2)
+
+        return phi
+    
+
+    def calc_vol_shale(self, method, gamma_log=None, gamma_sand=None, gamma_log_shale=None, gamma_log_sand=None. SP_log=None, SP_sand=None, SP_shale=None):
+
+        if method == 'gamma ray':
+
+            v_shale = (gamma_log - gamma_sand)/(gamma_log_shale - gamma_log_sand)
+
+        elif method == 'SP':
+
+            v_shale = (SP_log - SP_sand)/(SP_shale - SP_sand)
+
+        return v_shale
+        
+    def calc_fm_factor(self, porosity):
+
+        fm = 1/(porosity**2)
+
+        return fm
+
 
 
 
