@@ -77,11 +77,11 @@ class MathOps:
 
         return G
     
-    def calc_Z(self, df):
+    def calc_impedance(self, rho, vp):
         
-        df['Z'] = df['RHOB']*df['VP']
+        z = rho*vp
 
-        return df
+        return z
     
     def calc_r_noisy(self, df, noise_weight):
     
@@ -154,9 +154,9 @@ class MathOps:
 
         return rho
     
-    def calc_vs(self, vp): # Vs
+    def calc_vs(self, mu, rho): # Vs
         
-        vs = vp/(np.sqrt(4/3))
+        vs = np.sqrt(mu/rho)
         
         return vs
         
@@ -166,9 +166,9 @@ class MathOps:
         
         return mu
     
-    def calc_k(self, Vp, Vs, rho): # bulk modulus 
+    def calc_k(self, vp, vs, rho): # bulk modulus 
         
-        k = rho * (Vp**2 - (4/3) * Vs**2)
+        k = rho * (vp**2 - (4/3) * vs**2)
         
         return k
     
@@ -178,6 +178,44 @@ class MathOps:
         mu = rho * vs**2
         
         return lambda_, mu
+    
+    def calc_vp_vs_ratio(self, vp, vs):
+
+        ratio = vp/vs
+
+        return ratio
+    
+    def calc_poisson(self, vp, vs):
+        
+        
+        poisson = (vp**2-2*vs**2)/(2*(vp**2 - vs**2))
+
+        return poisson
+    
+    def calc_coefficients_equiv_model(self, lambda_, mu):
+
+        C = 1/(np.mean(1/(lambda_+2*mu)))
+        term1 = 1/(np.mean(1/(lambda_ + 2*mu)))
+        term2 = np.mean(lambda_ / (lambda_ + 2*mu))
+        F = term1*term2
+        L = 1/(np.mean(1/mu) )
+        M = np.mean(mu)
+
+        return C, F, L, M
+    
+    def calc_equivalent_vel(self, C, L, rho):
+        
+        rho0 = np.mean(rho)
+        vp = np.sqrt(C/rho0)
+        vs = np.sqrt(L/rho0)
+
+        return vp, vs, rho0
+
+
+
+
+
+
         
         
         
@@ -296,10 +334,14 @@ class ConversionTool:
             data = data*0.3048
             print('Output units: m')
             
-        elif input_units == 'g/cc3':
+        elif input_units == 'g/cm3':
             
             data = data*1e+3
             print('Output units: kg/m3')
+
+        elif input_units == 'micros/ft':
+
+            data = data/((1e6)*(0.3048))
             
             
         
