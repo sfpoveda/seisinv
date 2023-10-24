@@ -210,6 +210,12 @@ class MathOps:
         vs = np.sqrt(L/rho0)
 
         return vp, vs, rho0
+    
+    def calc_f(self, v, lambda_):
+
+        f = v/lambda_
+
+        return f
 
 
 
