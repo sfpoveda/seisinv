@@ -236,7 +236,7 @@ class MathOps:
         return phi
     
 
-    def calc_vol_shale(self, method, gamma_log=None, gamma_sand=None, gamma_log_shale=None, gamma_log_sand=None. SP_log=None, SP_sand=None, SP_shale=None):
+    def calc_vol_shale(self, method, gamma_log=None, gamma_sand=None, gamma_log_shale=None, gamma_log_sand=None, SP_log=None, SP_sand=None, SP_shale=None):
 
         if method == 'gamma ray':
 
@@ -248,11 +248,27 @@ class MathOps:
 
         return v_shale
         
-    def calc_fm_factor(self, porosity):
+    def calc_fm_factor(self, method, porosity=None, R0=None, Rw=None):
 
-        fm = 1/(porosity**2)
+        if method == 'porosity':
+            
+            fm = 1/porosity**2
+
+        elif method == 'resistivity':
+
+            fm = R0/Rw
 
         return fm
+    
+    def calc_density(self, method, rho_b, Z, A):
+
+        if method == 'electron':
+
+            rho_e = rho_b*2*Z/A
+
+        elif method == 'aparent':
+            
+            rho_a = 1.0704*rho_e - 0.1883
 
 
 
