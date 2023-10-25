@@ -288,6 +288,28 @@ class MathOps:
             Shc = (1 - Sw)
 
         return Sw, Shc
+    
+
+class WaveAttenuation:
+
+    def __init__(self, v, v0, f, f0):
+        self.v = v
+        self.v0 = v0
+        self.f = f
+        self.f0 = f0
+        self.omega = 2*np.pi*f
+
+    def calc_gamma(self):
+        return np.log(self.v/self.v0)/(np.log(self.f/self.f0))
+    
+    def calc_Q(self):
+        return 1/np.tan(self.calc_gamma()*np.pi)
+    
+    def calc_alpha(self):
+        return self.omega/(2*self.calc_Q())
+
+
+
 
 
 
