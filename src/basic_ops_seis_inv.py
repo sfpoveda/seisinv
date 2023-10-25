@@ -270,6 +270,28 @@ class MathOps:
             
             rho_a = 1.0704*rho_e - 0.1883
 
+    def calc_SP(self,R_fm, R_lodo, k):
+
+        SP = -k*np.log(R_fm/R_lodo)
+
+        return SP
+    
+    def calc_S(self, method, Sw=None, R0 = None, Rt = None):
+        
+        if method == 'Sw':
+        
+            Shc = (1 - Sw)
+
+        elif method == 'R':
+
+            Sw = np.sqrt(R0/Rt)
+            Shc = (1 - Sw)
+
+        return Sw, Shc
+
+
+
+
 
 
 
