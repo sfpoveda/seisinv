@@ -1,7 +1,4 @@
-import pywt
-import matplotlib.pyplot as plt
 from scipy import signal
-import pandas as pd
 import numpy as np
 from scipy import stats
 
@@ -74,8 +71,23 @@ class MathOps:
         df['r_prime'] = df['r'] + noise
         return df
     
-    def calc_rho(self):
-        return self.alpha_gardner*self.vp**self.beta_gardner
+    def calc_rho(self, method='gardner', rho_b=None, Z=None, A=None, rho_m=None, rho_p=None, phi=None, Sp=None, rho_hc=None):
+        # gardner density
+        if method == 'gardner':
+            rho = self.alpha_gardner*self.vp**self.beta_gardner
+        # apparent density
+        elif method == 'apparent':
+            rho_e = rho_b*2*Z/A
+            rho = 1.0704*rho_e - 0.1883
+        # bulk density
+        elif method == 'bulk':
+            rho = rho_m * (1 - phi) + phi * rho_p
+        # willie (bulk) density
+        elif method == 'willie':
+            rho = rho_m * (1 - phi) + phi * rho_p * Sp
+        elif method == 'fluid':
+            rho = Sp * rho_p + (1 - Sp) * rho_hc
+        return rho
     
     def calc_vp(self):
         return (self.calc_impedance()/self.alpha_gardner)**(1/(1+self.beta_gardner))
@@ -104,11 +116,21 @@ class MathOps:
     def calc_vs(self, mu, rho):
         return np.sqrt(mu/rho)
         
-    def calc_mu(self): # Shear modulus
-        return self.vs**2 * self.rho
-    
-    def calc_k(self): # bulk modulus 
-        return self.rho * (self.vp**2 - (4/3) * self.vs**2)
+    def calc_mu(self, method='normal', mu_p=None, mu_m=None, phi=None): # Shear modulus
+        if method == 'normal':
+            mu = self.vs**2 * self.rho
+        elif method == 'bulk': # solo si el fluido es viscoso (bulk)
+            mu = (mu_p * mu_m) / (mu_m * phi + (1 - phi) * mu_p)
+        elif method == 'non-viscous': # si el fluido no es viscoso (bulk)
+            mu = mu_m / (1 - phi)
+        return mu
+
+    def calc_k(self, method='normal', k_p=None, k_m=None, phi=None): # bulk modulus
+        if method == 'normal': 
+            k = self.rho * (self.vp**2 - (4/3) * self.vs**2)
+        elif method == 'bulk':
+            k = (k_p * k_m) / (k_m * phi + (1 - phi) * k_p)
+        return k
     
     def calc_lame_parameters(self):
         lambda_ = self.rho * (self.vp**2 - 2*self.vs**2)
@@ -152,7 +174,6 @@ class MathOps:
             phi = (4*r**2 - np.pi*r**2)/(4*r**2)
         return phi
     
-
     def calc_vol_shale(self, method, gamma_log=None, gamma_sand=None, gamma_log_shale=None, gamma_log_sand=None, SP_log=None, SP_sand=None, SP_shale=None):
         if method == 'gamma ray':
             v_shale = (gamma_log - gamma_sand)/(gamma_log_shale - gamma_log_sand)
@@ -167,15 +188,10 @@ class MathOps:
             fm = R0/Rw
         return fm
     
-    def calc_density(self, rho_b, Z, A):
-        rho_e = rho_b*2*Z/A
-        rho_a = 1.0704*rho_e - 0.1883
-        return rho_e, rho_a
-    
     def calc_SP(self,R_fm, R_lodo, k):
         return -k*np.log(R_fm/R_lodo)
     
-    def calc_S(self, method, Sw=None, R0 = None, Rt = None):
+    def calc_saturation(self, method, Sw=None, R0 = None, Rt = None):
         if method == 'Sw':
             Shc = (1 - Sw)
         elif method == 'R':
