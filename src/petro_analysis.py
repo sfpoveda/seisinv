@@ -6,13 +6,10 @@ from sklearn.metrics import r2_score
 class DensityAnalysis:
     
     def gardner_equation(self, x, a, b):
-        
         return a * x**b
     
     def calc_Gardner_relation(self, df):
-
         for tr in np.unique(df['TR']):
-
             mask = (df['TR'] == tr)
             df_filtered = df[mask]
             df_filtered.reset_index(drop=True, inplace=True)
@@ -34,15 +31,11 @@ class DensityAnalysis:
             x_offset, y_offset = x_limits[-1]*.1, y_limits[0]*.025
             plt.legend()
             plt.show()
-
     def Z_rho_equation(self, x, a, b):
-        
         return a * x + b
     
     def calc_Z_rho_relation(self, df):
-    
         for tr in np.unique(df['TR']):
-
             mask = (df['TR'] == tr)
             df_filtered = df[mask]
             df_filtered.reset_index(drop=True, inplace=True)
@@ -54,7 +47,6 @@ class DensityAnalysis:
             R2 = r2_score(df_filtered['RHOB'], self.Z_rho_equation(df_filtered['Z'], *popt)) # R2 correlation coefficient
             print(popt)
             plt.plot(df_filtered['Z'], self.Z_rho_equation(df_filtered['Z'], *popt), 'r', label=f'R2: {R2}')
-
             plt.xlabel(r'$Z$ $\left(\frac{kg}{m^2s}\right)$')
             plt.ylabel(r'$\rho$ $\left(\frac{kg}{m^3}\right)$')
             plt.title(f'No Gardner relation for TR: {tr}')
@@ -64,14 +56,10 @@ class DensityAnalysis:
             x_offset, y_offset = x_limits[-1]*.1, y_limits[0]*.025
             plt.legend()
             plt.show()
-            
-     
+
     def Gardner_relation_simple(self, Vp, units='m/s'):
-        
         if units == 'm/s':
             rho = 310*Vp**0.25
-            
         elif units == 'ft/s':
-            rho = 0.23*Vp**0.25
-            
+            rho = 0.23*Vp**0.25  
         return rho

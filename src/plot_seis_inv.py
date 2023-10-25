@@ -4,10 +4,8 @@ import numpy as np
 class PlotSeisInv:
 
     def plot_results(self, df, method, r, dict_names):
-
         fig, ax = plt.subplots(1,5, figsize=(10,7), sharey=True, dpi=500)
         lw=.3
-
         i = 0
         if method:
             key = f'DT_{method}'
@@ -21,7 +19,6 @@ class PlotSeisInv:
         ax[i].set_axisbelow(True)
         ax[i].ticklabel_format(style='sci', axis='x', scilimits=(-4,-4))
         ax[i].tick_params(axis='x', labelsize=6)
-
         i = 1
         if method:
             key = f'VP_{method}'
@@ -34,7 +31,6 @@ class PlotSeisInv:
         ax[i].set_axisbelow(True)
         ax[i].ticklabel_format(style='sci', axis='x', scilimits=(3,3))
         ax[i].tick_params(axis='x', labelsize=6)
-
         i = 2
         if method:
             key = f'RHOB_{method}'
@@ -47,7 +43,6 @@ class PlotSeisInv:
         ax[i].ticklabel_format(style='sci', axis='x')
         ax[i].ticklabel_format(style='sci', axis='x', scilimits=(3,3))
         ax[i].tick_params(axis='x', labelsize=6)
-
         i = 3
         if method:
             key = f'Z_{method}'
@@ -59,7 +54,6 @@ class PlotSeisInv:
         ax[i].set_axisbelow(True) 
         ax[i].ticklabel_format(style='sci', axis='x', scilimits=(6,6))
         ax[i].tick_params(axis='x', labelsize=6)
-
         i = 4
         key = r
         ax[i].plot(df[key], df['DEPT'], linewidth=lw)
@@ -68,7 +62,6 @@ class PlotSeisInv:
         ax[i].set_axisbelow(True)
         ax[i].ticklabel_format(style='sci', axis='x')
         ax[i].tick_params(axis='x', labelsize=6)
-
         '''i = 5
         key = f'waveform_{r}'
         ax[i].plot(df[key], df['DEPT'], linewidth=.1, color='k')
@@ -94,5 +87,4 @@ class PlotSeisInv:
         ax[i].set_axisbelow(True)
         ax[i].legend(loc='upper right', fontsize=4)
         ax[i].tick_params(axis='x', labelsize=6)'''
-        
         plt.suptitle(f'Method {method}')
