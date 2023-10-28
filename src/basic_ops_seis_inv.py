@@ -216,6 +216,67 @@ class WaveAttenuation:
     
     def calc_alpha(self):
         return self.omega/(2*self.calc_Q())
+    
+'''class FluidSubstitution(MathOps):
+
+    def __init__(self, k_min, phi, S_w, rho_w, k_w, rho_oil, k_oil, rho_min):
+        self.k_min = k_min
+        self.rho_min = rho_min
+        self.phi = phi
+        self.S_w = S_w
+        self.rho_w = rho_w
+        self.k_w = k_w
+        self.rho_oil = rho_oil
+        self.k_oil = k_oil
+
+    def calc_moduli(self):
+        k_sat = self.rho * (self.vp**2 - (4/3)*self.vs**2)
+        mu = self.rho * self.vs**2
+        return k_sat, mu
+    
+    # Compute the effective fluid properties
+    def calc_k_fl_init(self):
+        k_fl_init = 1 / (self.S_w/self.k_w + (1 - self.S_w)/(self.k_oil))
+        rho_fl_init = self.S_w * self.rho_w + (1 - self.S_w) * self.rho_oil
+        return k_fl_init, rho_fl_init
+    
+    # Calculate K dry (no fluids inside)
+    def calc_k_dry(self):
+        k_sat, mu = self.calc_moduli()
+        k_fl_init, rho_fl_init = self.calc_k_fl_init()
+        num = k_sat * ((self.phi*self.k_min) / k_fl_init + 1 - self.phi) - self.k_min
+        den = (self.phi * self.k_min) / k_fl_init + k_sat / self.k_min - 1 - self.phi 
+        return num/den
+    
+    # Calculate final moduli
+    def calc_fin_moduli(self):
+        k_fl_fin = self.k_w
+        rho_fl_fin = self.rho_w
+        return k_fl_fin, rho_fl_fin
+
+    # Calculate the the new-fluid saturated moduli
+    def calc_k_sat_fin(self):
+        k_dry = self.calc_k_dry()
+        k_fl_fin, rho_fl_fin = self.calc_fin_moduli()
+        k_sat_fin = k_dry + ( (1 - k_dry / self.k_min)**2 / (self.phi / k_fl_fin + (1 - self.phi) / self.k_min) - k_dry / self.k_min**2)
+        return k_sat_fin
+    
+    # Transform the density
+    def calc_rho_fin(self):
+        k_fl_fin, rho_fl_fin = self.calc_fin_moduli()
+        rho_fin = self.rho_min * (1 - self.phi) + rho_fl_fin * self.phi
+        return rho_fin
+    
+    # Compute the new velocities
+    def calc_new_vel(self):
+        k_sat, mu = self.calc_moduli()
+        rho_fin = self.calc_rho_fin()
+        k_sat_fin = self.calc_k_sat_fin()
+        vp = np.sqrt(mu / rho_fin)
+        vs = np.sqrt( (k_sat_fin + (4/3)*mu) / (rho_fin))
+        return vp, vs
+'''
+
 
 class Error:
 
