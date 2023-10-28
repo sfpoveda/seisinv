@@ -161,8 +161,10 @@ class MathOps:
                 dept_ls.append(bottom)
             elif top not in dept_ls:
                 dept_ls.append(top)
-            lambda_temp, mu_temp = lambda_[bottom:top], mu[bottom:top]
-            rho = self.rho[bottom:top]
+            i0 = bottom - self.initial_dept 
+            i1 = top - self.initial_dept
+            lambda_temp, mu_temp = lambda_[i0:i1], mu[i0:i1]
+            rho = self.rho[i0:i1]
             C = 1/(np.mean(1/(lambda_temp+2*mu_temp)))
             term1 = 1/(np.mean(1/(lambda_temp + 2*mu_temp)))
             term2 = np.mean(lambda_temp / (lambda_temp + 2*mu_temp))
@@ -343,6 +345,7 @@ class ConversionTool(MathOps):
 
     def backus_downsampling(self):
         vp0, vs0, rho0, dept0 = self.calc_equivalent_model()
+        print(f'New sampling frequency (in seismic domain) is: {max(vp0) / (self.lambda_min_end*0.3048)} Hz')
         return vp0, vs0, rho0, dept0
     
     def SI_conversion(self, data, input_units):
