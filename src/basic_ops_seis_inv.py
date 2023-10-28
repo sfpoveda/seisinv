@@ -147,18 +147,14 @@ class MathOps:
     
     def calc_coefficients_equiv_model(self):
         intervals = []
-        print(self.lambda_min_end)
         if self.lambda_min_end > 1: # if you want to transform layers to a specific wavelength (> 1 layer)
             n_equivalent_layers = int((len(self.vp) - 1) / self.lambda_min_end)
-            print('n_equivalent_layers', n_equivalent_layers)
             for i in range(1, n_equivalent_layers):
                 intervals.append([(i-1)*self.lambda_min_end + self.initial_dept, i*self.lambda_min_end+self.initial_dept])
         else: # if you want to obtain a single equivalente layer (1 layer)
             intervals.append([0, len(self.vp)-1])
         lambda_, mu = self.calc_lame_parameters()
-        print(intervals)
-
-        C_ls, F_ls, L_ls, M_ls, dept_ls = [], [], [], [], []
+        C_ls, F_ls, L_ls, M_ls, dept_ls, rho_ls = [], [], [], [], [], []
         for span in intervals:
             bottom, top = span[0], span[1]
             if bottom not in dept_ls:
@@ -166,6 +162,7 @@ class MathOps:
             elif top not in dept_ls:
                 dept_ls.append(top)
             lambda_temp, mu_temp = lambda_[bottom:top], mu[bottom:top]
+            rho = self.rho[bottom:top]
             C = 1/(np.mean(1/(lambda_temp+2*mu_temp)))
             term1 = 1/(np.mean(1/(lambda_temp + 2*mu_temp)))
             term2 = np.mean(lambda_temp / (lambda_temp + 2*mu_temp))
@@ -176,14 +173,14 @@ class MathOps:
             F_ls.append(F)
             L_ls.append(L)
             M_ls.append(M)
-        return C_ls, F_ls, L_ls, M_ls, dept_ls
+            rho_ls.append(np.mean(rho))
+        return np.array(C_ls), np.array(F_ls), np.array(L_ls), np.array(M_ls), np.array(dept_ls), np.array(rho_ls)
     
-    def calc_equivalent_vel(self):
-        C, _, L, _ = self.calc_coefficients_equiv_model()
-        rho0 = np.mean(self.rho)
-        vp0 = np.sqrt(C/rho0)
-        vs0 = np.sqrt(L/rho0)
-        return vp0, vs0, rho0
+    def calc_equivalent_model(self):
+        C_ls, F_ls, L_ls, M_ls, dept_ls, rho_ls = self.calc_coefficients_equiv_model()
+        vp0 = np.sqrt(C_ls/rho_ls)
+        vs0 = np.sqrt(L_ls/rho_ls)
+        return vp0, vs0, rho_ls, dept_ls
     
     def calc_f(self, v, lambda_wave):
         f = v/lambda_wave
@@ -345,11 +342,9 @@ class ConversionTool(MathOps):
         super().__init__( vp, vs, rho, lambda_min_end,initial_dept)
 
     def backus_downsampling(self):
-        C_ls, F_ls, L_ls, M_ls, dept_ls = self.calc_coefficients_equiv_model()
-        return C_ls, F_ls, L_ls, M_ls, dept_ls
-
-
-
+        vp0, vs0, rho0, dept0 = self.calc_equivalent_model()
+        return vp0, vs0, rho0, dept0
+    
     def SI_conversion(self, data, input_units):
         if input_units == 'km/s':
             data = data*1e+3
