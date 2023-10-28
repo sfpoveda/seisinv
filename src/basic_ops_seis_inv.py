@@ -217,9 +217,10 @@ class WaveAttenuation:
     def calc_alpha(self):
         return self.omega/(2*self.calc_Q())
     
-'''class FluidSubstitution(MathOps):
+class FluidSubstitution(MathOps):
 
-    def __init__(self, k_min, phi, S_w, rho_w, k_w, rho_oil, k_oil, rho_min):
+    def __init__(self, vp=2525, vs=985, rho=2130, k_min=36.6e9, phi=.3, S_w=.35, rho_w=1070, k_w=3e9, rho_oil=850, k_oil=1.3e9, rho_min=2650):
+        super().__init__(vp, vs, rho)
         self.k_min = k_min
         self.rho_min = rho_min
         self.phi = phi
@@ -272,15 +273,16 @@ class WaveAttenuation:
         k_sat, mu = self.calc_moduli()
         rho_fin = self.calc_rho_fin()
         k_sat_fin = self.calc_k_sat_fin()
-        vp = np.sqrt(mu / rho_fin)
-        vs = np.sqrt( (k_sat_fin + (4/3)*mu) / (rho_fin))
+        vs = np.sqrt(mu / rho_fin)
+        vp = np.sqrt( (k_sat_fin + (4/3)*mu) / (rho_fin))
         return vp, vs
-'''
+
 
 
 class Error:
 
-    def __init__(self, y_true, y_pred):
+    def __init__(self, vp, vs, rho, y_true, y_pred):
+        super().__init__(self, vp, vs, rho)
         self.y_true = y_true
         self.y_pred = y_pred
         self.len_y_true = len(y_true)
