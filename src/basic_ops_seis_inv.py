@@ -4,12 +4,14 @@ from scipy import stats
 
 class MathOps:
 
-    def __init__(self, vp, vs, rho):
+    def __init__(self, vp, vs, rho, lambda_min_end=1, initial_dept=0):
         self.vp = vp
         self.vs = vs
         self.rho = rho
         self.alpha_gardner = 310
         self.beta_gardner = .25
+        self.lambda_min_end = lambda_min_end
+        self.initial_dept = initial_dept
     
     def calc_r(self, Z_data, mode='model'):
         if mode == 'model':
@@ -143,25 +145,26 @@ class MathOps:
     def calc_poisson(self):
         return (self.vp**2 - 2*self.vs**2)/(2 * (self.vp**2 - self.vs**2))
     
-    def calc_coefficients_equiv_model(self, initial_dept=0, lambda_min_end=None):
+    def calc_coefficients_equiv_model(self):
         intervals = []
-        if lambda_min_end: # if you want to transform layers to a specific wavelength (> 1 layer)
-            n_equivalent_layers = int((len(self.vp) - 1) / lambda_min_end)
-            print(n_equivalent_layers)
+        print(self.lambda_min_end)
+        if self.lambda_min_end > 1: # if you want to transform layers to a specific wavelength (> 1 layer)
+            n_equivalent_layers = int((len(self.vp) - 1) / self.lambda_min_end)
+            print('n_equivalent_layers', n_equivalent_layers)
             for i in range(1, n_equivalent_layers):
-                intervals.append([(i-1)*n_equivalent_layers, i*n_equivalent_layers])
+                intervals.append([(i-1)*self.lambda_min_end + self.initial_dept, i*self.lambda_min_end+self.initial_dept])
         else: # if you want to obtain a single equivalente layer (1 layer)
             intervals.append([0, len(self.vp)-1])
         lambda_, mu = self.calc_lame_parameters()
-        
+        print(intervals)
 
         C_ls, F_ls, L_ls, M_ls, dept_ls = [], [], [], [], []
         for span in intervals:
             bottom, top = span[0], span[1]
             if bottom not in dept_ls:
-                dept_ls.append(bottom + initial_dept)
+                dept_ls.append(bottom)
             elif top not in dept_ls:
-                dept_ls.append(top + initial_dept)
+                dept_ls.append(top)
             lambda_temp, mu_temp = lambda_[bottom:top], mu[bottom:top]
             C = 1/(np.mean(1/(lambda_temp+2*mu_temp)))
             term1 = 1/(np.mean(1/(lambda_temp + 2*mu_temp)))
@@ -338,11 +341,11 @@ class Filtering:
 
 class ConversionTool(MathOps):
 
-    def __init__(self, vp=2500, vs=1500, rho=2100):
-        super().__init__(vp, vs, rho)
+    def __init__(self, lambda_min_end=1, vp=2500, vs=1500, rho=2100, initial_dept=0):
+        super().__init__( vp, vs, rho, lambda_min_end,initial_dept)
 
-    def backus_downsampling(self, lambda_min_end=1):
-        C_ls, F_ls, L_ls, M_ls, dept_ls = self.calc_coefficients_equiv_model(lambda_min_end=lambda_min_end)
+    def backus_downsampling(self):
+        C_ls, F_ls, L_ls, M_ls, dept_ls = self.calc_coefficients_equiv_model()
         return C_ls, F_ls, L_ls, M_ls, dept_ls
 
 
