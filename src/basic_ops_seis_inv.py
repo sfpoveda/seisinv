@@ -4,10 +4,11 @@ from scipy import stats
 
 class MathOps:
 
-    def __init__(self, vp, vs, rho, lambda_min_end=1, initial_dept=0):
+    def __init__(self, vp, vs, rho, depth, lambda_min_end=1, initial_dept=0):
         self.vp = vp
         self.vs = vs
         self.rho = rho
+        self.depth = depth
         self.alpha_gardner = 310
         self.beta_gardner = .25
         self.lambda_min_end = lambda_min_end
@@ -150,21 +151,21 @@ class MathOps:
         if self.lambda_min_end > 1: # if you want to transform layers to a specific wavelength (> 1 layer)
             n_equivalent_layers = int((len(self.vp) - 1) / self.lambda_min_end)
             for i in range(1, n_equivalent_layers):
-                intervals.append([(i-1)*self.lambda_min_end + self.initial_dept, i*self.lambda_min_end+self.initial_dept])
+                start = (i-1)*self.lambda_min_end
+                end = i*self.lambda_min_end
+                intervals.append([start, end])
         else: # if you want to obtain a single equivalente layer (1 layer)
             intervals.append([0, len(self.vp)-1])
         lambda_, mu = self.calc_lame_parameters()
         C_ls, F_ls, L_ls, M_ls, dept_ls, rho_ls = [], [], [], [], [], []
         for span in intervals:
-            bottom, top = span[0], span[1]
-            if bottom not in dept_ls:
-                dept_ls.append(bottom)
-            elif top not in dept_ls:
-                dept_ls.append(top)
-            i0 = bottom - self.initial_dept 
-            i1 = top - self.initial_dept
-            lambda_temp, mu_temp = lambda_[i0:i1], mu[i0:i1]
-            rho = self.rho[i0:i1]
+            bottom, top = span[0], span[1] # start and end index
+            if self.depth.iloc[bottom] not in dept_ls:
+                dept_ls.append(self.depth.iloc[bottom])
+            elif self.depth.iloc[top] not in dept_ls:
+                dept_ls.append(self.depth.iloc[top])
+            lambda_temp, mu_temp = lambda_[bottom:top], mu[bottom:top]
+            rho = self.rho[bottom:top]
             C = 1/(np.mean(1/(lambda_temp+2*mu_temp)))
             term1 = 1/(np.mean(1/(lambda_temp + 2*mu_temp)))
             term2 = np.mean(lambda_temp / (lambda_temp + 2*mu_temp))
@@ -176,6 +177,22 @@ class MathOps:
             L_ls.append(L)
             M_ls.append(M)
             rho_ls.append(np.mean(rho))
+        # downsample the remaining last incomplete interval
+        bottom, top = span[1], len(self.depth) - 1
+        dept_ls.append(self.depth.iloc[top])
+        lambda_temp, mu_temp = lambda_[bottom:top], mu[bottom:top]
+        rho = self.rho[bottom:top]
+        C = 1/(np.mean(1/(lambda_temp+2*mu_temp)))
+        term1 = 1/(np.mean(1/(lambda_temp + 2*mu_temp)))
+        term2 = np.mean(lambda_temp / (lambda_temp + 2*mu_temp))
+        F = term1*term2
+        L = 1/(np.mean(1/mu_temp) )
+        M = np.mean(mu_temp)
+        C_ls.append(C)
+        F_ls.append(F)
+        L_ls.append(L)
+        M_ls.append(M)
+        rho_ls.append(np.mean(rho))
         return np.array(C_ls), np.array(F_ls), np.array(L_ls), np.array(M_ls), np.array(dept_ls), np.array(rho_ls)
     
     def calc_equivalent_model(self):
@@ -340,11 +357,12 @@ class Filtering:
 
 class ConversionTool(MathOps):
 
-    def __init__(self, lambda_min_end=1, vp=2500, vs=1500, rho=2100, initial_dept=0):
-        super().__init__( vp, vs, rho, lambda_min_end,initial_dept)
+    def __init__(self, lambda_min_end=1, vp=2500, vs=1500, rho=2100, initial_dept=0, depth=0):
+        super().__init__( vp, vs, rho, depth, lambda_min_end,initial_dept)
 
     def backus_downsampling(self):
         vp0, vs0, rho0, dept0 = self.calc_equivalent_model()
+        print(f'Original sampling frequency (in well-log domain) is: {max(self.vp) / (1*0.3048)} Hz')
         print(f'New sampling frequency (in seismic domain) is: {max(vp0) / (self.lambda_min_end*0.3048)} Hz')
         return vp0, vs0, rho0, dept0
     
