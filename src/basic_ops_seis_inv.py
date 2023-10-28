@@ -143,15 +143,37 @@ class MathOps:
     def calc_poisson(self):
         return (self.vp**2 - 2*self.vs**2)/(2 * (self.vp**2 - self.vs**2))
     
-    def calc_coefficients_equiv_model(self):
+    def calc_coefficients_equiv_model(self, initial_dept=0, lambda_min_end=None):
+        intervals = []
+        if lambda_min_end: # if you want to transform layers to a specific wavelength (> 1 layer)
+            n_equivalent_layers = int((len(self.vp) - 1) / lambda_min_end)
+            print(n_equivalent_layers)
+            for i in range(1, n_equivalent_layers):
+                intervals.append([(i-1)*n_equivalent_layers, i*n_equivalent_layers])
+        else: # if you want to obtain a single equivalente layer (1 layer)
+            intervals.append([0, len(self.vp)-1])
         lambda_, mu = self.calc_lame_parameters()
-        C = 1/(np.mean(1/(lambda_+2*mu)))
-        term1 = 1/(np.mean(1/(lambda_ + 2*mu)))
-        term2 = np.mean(lambda_ / (lambda_ + 2*mu))
-        F = term1*term2
-        L = 1/(np.mean(1/mu) )
-        M = np.mean(mu)
-        return C, F, L, M
+        
+
+        C_ls, F_ls, L_ls, M_ls, dept_ls = [], [], [], [], []
+        for span in intervals:
+            bottom, top = span[0], span[1]
+            if bottom not in dept_ls:
+                dept_ls.append(bottom + initial_dept)
+            elif top not in dept_ls:
+                dept_ls.append(top + initial_dept)
+            lambda_temp, mu_temp = lambda_[bottom:top], mu[bottom:top]
+            C = 1/(np.mean(1/(lambda_temp+2*mu_temp)))
+            term1 = 1/(np.mean(1/(lambda_temp + 2*mu_temp)))
+            term2 = np.mean(lambda_temp / (lambda_temp + 2*mu_temp))
+            F = term1*term2
+            L = 1/(np.mean(1/mu_temp) )
+            M = np.mean(mu_temp)
+            C_ls.append(C)
+            F_ls.append(F)
+            L_ls.append(L)
+            M_ls.append(M)
+        return C_ls, F_ls, L_ls, M_ls, dept_ls
     
     def calc_equivalent_vel(self):
         C, _, L, _ = self.calc_coefficients_equiv_model()
@@ -306,8 +328,8 @@ class Filtering:
     
     def remove_outliers(self, df, threshold=3, drop_col=None):
         if drop_col:
-            df.drop(columns=drop_col, inplace=True)
-        z_scores = stats.zscore(df)
+            df_copy = df.drop(columns=drop_col)
+        z_scores = stats.zscore(df_copy)
         abs_z_scores = abs(z_scores)
         filtered_entries = (abs_z_scores < threshold).all(axis=1)  # Adjust the threshold as needed (e.g., 3 standard deviations)
         df_filtered = df[filtered_entries]
@@ -315,49 +337,16 @@ class Filtering:
         return df_filtered
 
 class ConversionTool(MathOps):
-    
-    def well_logs_2_seismic(self, lambda_wf_initial, lambda_wf_target):
-        lambda_, mu = self.calc_lame_parameters()
-        n_new_layers = int((len(self.rho)*lambda_wf_initial)/lambda_wf_target)
-        ls_vp0 = []
-        ls_vs0 = []
-        ls_depth = []
-        for i in range(n_new_layers):
-            lambda_temp = lambda_[i * lambda_wf_target: (i + 1) * lambda_wf_target]
-            mu_temp = mu[i * lambda_wf_target: (i + 1) * lambda_wf_target]
-            rho_temp = self.rho[i * lambda_wf_target: (i + 1) * lambda_wf_target]
-            # Calculate coefficients
-            c = np.mean(1/(lambda_temp + 2*mu_temp))**(-1)
-            f = (np.mean(1/(lambda_temp + 2*mu_temp))**(-1))*np.mean(lambda_temp / (lambda_temp + 2*mu_temp))
-            l = np.mean(1/mu_temp)**(-1)
-            m = np.mean(mu_temp)
-            # Calculate average velocities
-            vp0 = np.sqrt(c/np.mean(rho_temp))
-            vs0 = np.sqrt(l/np.mean(rho_temp))
-            ls_vp0.append(vp0)
-            ls_vs0.append(vs0)
-            print((i+1)*lambda_wf_target)
-            ls_depth.append( (i+1)*lambda_wf_target )
-        if (i == (n_new_layers-1)) and ( n_new_layers % (len(self.rho)/lambda_wf_target) != 0 ):
-            lambda_temp = lambda_[(i + 1) * lambda_wf_target:]
-            mu_temp = mu[(i + 1) * lambda_wf_target:]
-            rho_temp = self.rho[(i + 1) * lambda_wf_target:]
-            # Calculate coefficients
-            c = np.mean(1/(lambda_temp + 2*mu_temp))**(-1)
-            f = (np.mean(1/(lambda_temp + 2*mu_temp))**(-1))*np.mean(lambda_temp / (lambda_temp + 2*mu_temp))
-            l = np.mean(1/mu_temp)**(-1)
-            m = np.mean(mu_temp)
-            # Calculate average velocities
-            vp0 = np.sqrt(c/np.mean(rho_temp))
-            vs0 = np.sqrt(l/np.mean(rho_temp))
-            ls_vp0.append(vp0)
-            ls_vs0.append(vs0)
-            ls_depth.append(0)
-        print('\n')
-        print('Succesfully converted well log data resolution to seismic data resolution.')
-        print(f'Data was downsampled from {lambda_wf_initial} to {lambda_wf_target}')
-        return np.array(ls_vp0), np.array(ls_vs0), np.array(ls_depth)*lambda_wf_initial
-    
+
+    def __init__(self, vp=2500, vs=1500, rho=2100):
+        super().__init__(vp, vs, rho)
+
+    def backus_downsampling(self, lambda_min_end=1):
+        C_ls, F_ls, L_ls, M_ls, dept_ls = self.calc_coefficients_equiv_model(lambda_min_end=lambda_min_end)
+        return C_ls, F_ls, L_ls, M_ls, dept_ls
+
+
+
     def SI_conversion(self, data, input_units):
         if input_units == 'km/s':
             data = data*1e+3
