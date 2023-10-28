@@ -304,7 +304,9 @@ class Error:
     
 class Filtering:
     
-    def remove_outliers(self, df, threshold=3):
+    def remove_outliers(self, df, threshold=3, drop_col=None):
+        if drop_col:
+            df.drop(columns=drop_col, inplace=True)
         z_scores = stats.zscore(df)
         abs_z_scores = abs(z_scores)
         filtered_entries = (abs_z_scores < threshold).all(axis=1)  # Adjust the threshold as needed (e.g., 3 standard deviations)
