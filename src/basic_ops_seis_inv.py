@@ -4,7 +4,7 @@ from scipy import stats
 
 class MathOps:
 
-    def __init__(self, vp, vs, rho, depth, lambda_min_end=1, initial_dept=0):
+    def __init__(self, vp=None, vs=None, rho=None, depth=None, lambda_min_end=1, initial_dept=0):
         self.vp = vp
         self.vs = vs
         self.rho = rho
