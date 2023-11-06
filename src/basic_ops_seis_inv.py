@@ -361,8 +361,8 @@ class ConversionTool(MathOps):
 
     def backus_downsampling(self):
         vp0, vs0, rho0, dept0 = self.calc_equivalent_model()
-        print(f'Original sampling frequency (in well-log domain) is: {max(self.vp) / (1*0.3048)} Hz')
-        print(f'New sampling frequency (in seismic domain) is: {max(vp0) / (self.lambda_min_end*0.3048)} Hz')
+        print(f'Original sampling frequency (in well-log domain) is: {max(self.vp*1000) / (1*0.3048)} Hz')
+        print(f'New sampling frequency (in seismic domain) is: {max(vp0*1000) / (self.lambda_min_end*0.3048)} Hz')
         return vp0, vs0, rho0, dept0
     
     def SI_conversion(self, data, input_units):
