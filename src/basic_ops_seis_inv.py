@@ -322,8 +322,7 @@ class FluidSubstitution(MathOps):
 
 class Error:
 
-    def __init__(self, vp, vs, rho, y_true, y_pred):
-        super().__init__(self, vp, vs, rho)
+    def __init__(self, y_true, y_pred, vp=None, vs=None, rho=None):
         self.y_true = y_true
         self.y_pred = y_pred
         self.len_y_true = len(y_true)
@@ -331,14 +330,14 @@ class Error:
     
     def l1_error(self):
         # Calculate the absolute percentage error for each data point
-        abs_percentage_error = np.abs((self.y_pred - self.y_true) / self.y_true)
+        abs_percentage_error = np.abs(self.y_pred - self.y_true)
         # Calculate the mean absolute percentage error as a percentage of n
         l1 = (np.sum(abs_percentage_error) / self.len_y_true) * 100
         return l1
 
     def l2_error(self):
         # Calculate the squared percentage error for each data point
-        squared_percentage_error = ((self.y_true - self.y_pred) / self.y_true) ** 2
+        squared_percentage_error = (self.y_true - self.y_pred) ** 2
         # Calculate the mean squared percentage error and take the square root as a percentage of n
         l2 = (np.sqrt(np.sum(squared_percentage_error)) / self.len_y_true) * 100
         return l2
